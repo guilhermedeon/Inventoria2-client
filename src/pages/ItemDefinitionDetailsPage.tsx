@@ -1,19 +1,25 @@
 import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useItemDefinitionQuery } from '../hooks/use-item-definitions';
 import { useItemVariants, useCreateItemVariant, useUpdateItemVariant, useDeleteItemVariant } from '../hooks/use-item-variants';
-import { useItemDefinitionsQuery } from '../hooks/use-item-definitions';
-import type { ItemVariant, ItemDefinition } from '../types';
+import type { ItemVariant } from '../types';
 
-export const ItemVariantsPage = () => {
-  const { data: variants, isLoading, error } = useItemVariants();
-  const { data: itemDefinitions } = useItemDefinitionsQuery();
+export const ItemDefinitionDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { data: itemDefinition, isLoading: isLoadingDef, error: errorDef } = useItemDefinitionQuery(id!);
+  const { data: allVariants, isLoading: isLoadingVariants, error: errorVariants } = useItemVariants();
+  
   const createVariant = useCreateItemVariant();
   const updateVariant = useUpdateItemVariant();
   const deleteVariant = useDeleteItemVariant();
 
+  const variants = allVariants?.filter((v) => v.itemDefinitionId === id);
+
   const [isCreating, setIsCreating] = useState(false);
   const [editingVariant, setEditingVariant] = useState<ItemVariant | null>(null);
   const [formData, setFormData] = useState({
-    itemDefinitionId: '',
     name: '',
     description: '',
     sku: '',
@@ -28,23 +34,26 @@ export const ItemVariantsPage = () => {
       if (editingVariant) {
         await updateVariant.mutateAsync({
           id: editingVariant.id,
-          data: { ...formData, userId },
+          data: { ...formData, itemDefinitionId: id!, userId },
         });
       } else {
-        await createVariant.mutateAsync({ ...formData, userId });
+        await createVariant.mutateAsync({ ...formData, itemDefinitionId: id!, userId });
       }
-      setFormData({ itemDefinitionId: '', name: '', description: '', sku: '', barcode: '' });
-      setIsCreating(false);
-      setEditingVariant(null);
+      resetForm();
     } catch (error) {
       console.error('Failed to save variant:', error);
     }
   };
 
+  const resetForm = () => {
+    setFormData({ name: '', description: '', sku: '', barcode: '' });
+    setIsCreating(false);
+    setEditingVariant(null);
+  };
+
   const handleEdit = (variant: ItemVariant) => {
     setEditingVariant(variant);
     setFormData({
-      itemDefinitionId: variant.itemDefinitionId,
       name: variant.name,
       description: variant.description || '',
       sku: variant.sku || '',
@@ -53,53 +62,39 @@ export const ItemVariantsPage = () => {
     setIsCreating(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (variantId: string) => {
     if (window.confirm('Are you sure you want to delete this variant?')) {
-      await deleteVariant.mutateAsync(id);
+      await deleteVariant.mutateAsync(variantId);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({ itemDefinitionId: '', name: '', description: '', sku: '', barcode: '' });
-    setIsCreating(false);
-    setEditingVariant(null);
-  };
-
-  if (isLoading) return <div className="loading">Loading variants...</div>;
-  if (error) return <div className="error">Error loading variants</div>;
+  if (isLoadingDef || isLoadingVariants) return <div className="loading">Loading item definition details...</div>;
+  if (errorDef || errorVariants) return <div className="error">Error loading item definition details</div>;
+  if (!itemDefinition) return <div className="error">Item Definition not found.</div>;
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1>Item Variants</h1>
-        {!isCreating && (
-          <button onClick={() => setIsCreating(true)} className="btn-primary">
-            Create Variant
-          </button>
-        )}
+      <div className="page-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+        <button onClick={() => navigate('/item-definitions')} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+          &larr; Back to Item Definitions
+        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <div>
+            <h1>{itemDefinition.name}</h1>
+            {itemDefinition.description && <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{itemDefinition.description}</p>}
+          </div>
+          {!isCreating && (
+            <button onClick={() => setIsCreating(true)} className="btn-primary">
+              Add Variant
+            </button>
+          )}
+        </div>
       </div>
 
       {isCreating && (
         <div className="form-container">
-          <h2>{editingVariant ? 'Edit Variant' : 'Create New Variant'}</h2>
+          <h2>{editingVariant ? 'Edit Variant' : `Add New Variant to ${itemDefinition.name}`}</h2>
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="itemDefinitionId">Item Definition</label>
-              <select
-                id="itemDefinitionId"
-                value={formData.itemDefinitionId}
-                onChange={(e) => setFormData({ ...formData, itemDefinitionId: e.target.value })}
-                required
-              >
-                <option value="">Select an item definition</option>
-                {itemDefinitions?.map((def: ItemDefinition) => (
-                  <option key={def.id} value={def.id}>
-                    {def.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="form-group">
               <label htmlFor="name">Variant Name</label>
               <input
@@ -145,9 +140,9 @@ export const ItemVariantsPage = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary" disabled={createVariant.isPending || updateVariant.isPending}>
-                {editingVariant ? 'Update' : 'Create'}
+                {editingVariant ? 'Update Variant' : 'Add Variant'}
               </button>
-              <button type="button" onClick={handleCancel} className="btn-secondary">
+              <button type="button" onClick={resetForm} className="btn-secondary">
                 Cancel
               </button>
             </div>
@@ -155,25 +150,22 @@ export const ItemVariantsPage = () => {
         </div>
       )}
 
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Item Definition</th>
-              <th>SKU</th>
-              <th>Barcode</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {variants?.map((variant) => {
-              const itemDef = itemDefinitions?.find((d: ItemDefinition) => d.id === variant.itemDefinitionId);
-              return (
+      {variants && variants.length > 0 ? (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Barcode</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {variants.map((variant) => (
                 <tr key={variant.id}>
                   <td>{variant.name}</td>
-                  <td>{itemDef?.name || variant.itemDefinitionId}</td>
                   <td>{variant.sku || '-'}</td>
                   <td>{variant.barcode || '-'}</td>
                   <td>{new Date(variant.createdAt).toLocaleDateString()}</td>
@@ -186,11 +178,15 @@ export const ItemVariantsPage = () => {
                     </button>
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>No variants created for this definition yet.</p>
+        </div>
+      )}
     </div>
   );
 };

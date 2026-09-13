@@ -1,24 +1,30 @@
 import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useInventoryQuery } from '../hooks/use-inventories';
 import { useInventoryItems, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/use-inventory-items';
-import { useInventoriesQuery } from '../hooks/use-inventories';
 import { useItemVariants } from '../hooks/use-item-variants';
 import { usePackDefinitions } from '../hooks/use-pack-definitions';
-import type { InventoryItem, Inventory } from '../types';
+import type { InventoryItem } from '../types';
 
-export const InventoryItemsPage = () => {
-  const { data: items, isLoading, error } = useInventoryItems();
-  const { data: inventories } = useInventoriesQuery();
+export const InventoryDetailsPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const { data: inventory, isLoading: isLoadingInventory, error: errorInventory } = useInventoryQuery(id!);
+  const { data: allItems, isLoading: isLoadingItems, error: errorItems } = useInventoryItems();
   const { data: variants } = useItemVariants();
   const { data: packs } = usePackDefinitions();
+  
   const createItem = useCreateInventoryItem();
   const updateItem = useUpdateInventoryItem();
   const deleteItem = useDeleteInventoryItem();
+
+  const items = allItems?.filter((item) => item.inventoryId === id);
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemType, setItemType] = useState<'variant' | 'pack'>('variant');
   const [formData, setFormData] = useState({
-    inventoryId: '',
     itemVariantId: '',
     packDefinitionId: '',
     quantity: 1,
@@ -34,6 +40,7 @@ export const InventoryItemsPage = () => {
     const data = {
       ...formData,
       userId,
+      inventoryId: id!,
       itemVariantId: itemType === 'variant' ? formData.itemVariantId : undefined,
       packDefinitionId: itemType === 'pack' ? formData.packDefinitionId : undefined,
     };
@@ -52,7 +59,6 @@ export const InventoryItemsPage = () => {
 
   const resetForm = () => {
     setFormData({
-      inventoryId: '',
       itemVariantId: '',
       packDefinitionId: '',
       quantity: 1,
@@ -69,7 +75,6 @@ export const InventoryItemsPage = () => {
     setEditingItem(item);
     setItemType(item.itemVariantId ? 'variant' : 'pack');
     setFormData({
-      inventoryId: item.inventoryId,
       itemVariantId: item.itemVariantId || '',
       packDefinitionId: item.packDefinitionId || '',
       quantity: item.quantity,
@@ -80,47 +85,39 @@ export const InventoryItemsPage = () => {
     setIsCreating(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this inventory item?')) {
-      await deleteItem.mutateAsync(id);
+  const handleDelete = async (itemId: string) => {
+    if (window.confirm('Are you sure you want to remove this item from the inventory?')) {
+      await deleteItem.mutateAsync(itemId);
     }
   };
 
-  if (isLoading) return <div className="loading">Loading inventory items...</div>;
-  if (error) return <div className="error">Error loading inventory items</div>;
+  if (isLoadingInventory || isLoadingItems) return <div className="loading">Loading inventory details...</div>;
+  if (errorInventory || errorItems) return <div className="error">Error loading inventory details</div>;
+  if (!inventory) return <div className="error">Inventory not found.</div>;
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1>Inventory Items</h1>
-        {!isCreating && (
-          <button onClick={() => setIsCreating(true)} className="btn-primary">
-            Add Item
-          </button>
-        )}
+      <div className="page-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+        <button onClick={() => navigate('/inventories')} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+          &larr; Back to Inventories
+        </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          <div>
+            <h1>{inventory.name}</h1>
+            {inventory.description && <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>{inventory.description}</p>}
+          </div>
+          {!isCreating && (
+            <button onClick={() => setIsCreating(true)} className="btn-primary">
+              Add Item to Box
+            </button>
+          )}
+        </div>
       </div>
 
       {isCreating && (
         <div className="form-container">
-          <h2>{editingItem ? 'Edit Inventory Item' : 'Add New Inventory Item'}</h2>
+          <h2>{editingItem ? 'Edit Item' : `Add Item to ${inventory.name}`}</h2>
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label htmlFor="inventoryId">Inventory Location</label>
-              <select
-                id="inventoryId"
-                value={formData.inventoryId}
-                onChange={(e) => setFormData({ ...formData, inventoryId: e.target.value })}
-                required
-              >
-                <option value="">Select inventory</option>
-                {inventories?.map((inv: Inventory) => (
-                  <option key={inv.id} value={inv.id}>
-                    {inv.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="form-group">
               <label>Item Type</label>
               <div>
@@ -227,7 +224,7 @@ export const InventoryItemsPage = () => {
 
             <div className="form-actions">
               <button type="submit" className="btn-primary" disabled={createItem.isPending || updateItem.isPending}>
-                {editingItem ? 'Update' : 'Add'}
+                {editingItem ? 'Update Item' : 'Add to Box'}
               </button>
               <button type="button" onClick={resetForm} className="btn-secondary">
                 Cancel
@@ -237,49 +234,52 @@ export const InventoryItemsPage = () => {
         </div>
       )}
 
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Inventory</th>
-              <th>Item</th>
-              <th>Type</th>
-              <th>Quantity</th>
-              <th>Serial #</th>
-              <th>Asset #</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items?.map((item) => {
-              const inventory = inventories?.find((i: Inventory) => i.id === item.inventoryId);
-              const variant = variants?.find((v) => v.id === item.itemVariantId);
-              const pack = packs?.find((p) => p.id === item.packDefinitionId);
-              const itemName = variant?.name || pack?.name || 'Unknown';
-              const itemType = variant ? 'Variant' : 'Pack';
+      {items && items.length > 0 ? (
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Serial #</th>
+                <th>Asset #</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => {
+                const variant = variants?.find((v) => v.id === item.itemVariantId);
+                const pack = packs?.find((p) => p.id === item.packDefinitionId);
+                const itemName = variant?.name || pack?.name || 'Unknown';
+                const itemTypeLabel = variant ? 'Variant' : 'Pack';
 
-              return (
-                <tr key={item.id}>
-                  <td>{inventory?.name || item.inventoryId}</td>
-                  <td>{itemName}</td>
-                  <td>{itemType}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.serialNumber || '-'}</td>
-                  <td>{item.assetNumber || '-'}</td>
-                  <td>
-                    <button onClick={() => handleEdit(item)} className="btn-secondary" style={{ marginRight: '0.5rem' }}>
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(item.id)} className="btn-danger">
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                return (
+                  <tr key={item.id}>
+                    <td>{itemName}</td>
+                    <td>{itemTypeLabel}</td>
+                    <td>{item.quantity}</td>
+                    <td>{item.serialNumber || '-'}</td>
+                    <td>{item.assetNumber || '-'}</td>
+                    <td>
+                      <button onClick={() => handleEdit(item)} className="btn-secondary" style={{ marginRight: '0.5rem' }}>
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} className="btn-danger">
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--border)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>This box is empty.</p>
+        </div>
+      )}
     </div>
   );
 };

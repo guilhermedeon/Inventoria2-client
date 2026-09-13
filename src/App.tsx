@@ -9,10 +9,10 @@ import { Layout } from './components/Layout';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { TagsPage } from './pages/TagsPage';
 import { ItemDefinitionsPage } from './pages/ItemDefinitionsPage';
-import { ItemVariantsPage } from './pages/ItemVariantsPage';
+import { ItemDefinitionDetailsPage } from './pages/ItemDefinitionDetailsPage';
 import { PackDefinitionsPage } from './pages/PackDefinitionsPage';
 import { InventoriesPage } from './pages/InventoriesPage';
-import { InventoryItemsPage } from './pages/InventoryItemsPage';
+import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -45,10 +45,10 @@ function App() {
                       <Route path="/categories" element={<CategoriesPage />} />
                       <Route path="/tags" element={<TagsPage />} />
                       <Route path="/item-definitions" element={<ItemDefinitionsPage />} />
-                      <Route path="/item-variants" element={<ItemVariantsPage />} />
+                      <Route path="/item-definitions/:id" element={<ItemDefinitionDetailsPage />} />
                       <Route path="/pack-definitions" element={<PackDefinitionsPage />} />
                       <Route path="/inventories" element={<InventoriesPage />} />
-                      <Route path="/inventory-items" element={<InventoryItemsPage />} />
+                      <Route path="/inventories/:id" element={<InventoryDetailsPage />} />
                     </Routes>
                   </Layout>
                 </ProtectedRoute>

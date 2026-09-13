@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
@@ -6,35 +6,43 @@ interface LayoutProps {
 }
 
 export const Layout = ({ children }: LayoutProps) => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const location = useLocation();
+
+  const getLinkClass = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`) ? 'active' : '';
+  };
 
   return (
     <div className="app">
       <nav className="sidebar">
-        <div className="sidebar-header">
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <img src="/logo.svg" alt="Inventoria Logo" style={{ width: '40px', height: '40px' }} />
           <h2>Inventoria</h2>
         </div>
+        
+        {user && (
+          <div className="user-info" style={{ padding: '0 2rem 1rem 2rem' }}>
+            Welcome back,
+            <span>{user.firstName} {user.lastName}</span>
+          </div>
+        )}
+
         <ul className="nav-links">
           <li>
-            <Link to="/categories">Categories</Link>
+            <Link to="/categories" className={getLinkClass('/categories')}>Categories</Link>
           </li>
           <li>
-            <Link to="/tags">Tags</Link>
+            <Link to="/tags" className={getLinkClass('/tags')}>Tags</Link>
           </li>
           <li>
-            <Link to="/item-definitions">Item Definitions</Link>
+            <Link to="/item-definitions" className={getLinkClass('/item-definitions')}>Item Definitions</Link>
           </li>
           <li>
-            <Link to="/item-variants">Item Variants</Link>
+            <Link to="/pack-definitions" className={getLinkClass('/pack-definitions')}>Pack Definitions</Link>
           </li>
           <li>
-            <Link to="/pack-definitions">Pack Definitions</Link>
-          </li>
-          <li>
-            <Link to="/inventories">Inventories</Link>
-          </li>
-          <li>
-            <Link to="/inventory-items">Inventory Items</Link>
+            <Link to="/inventories" className={getLinkClass('/inventories')}>Inventories</Link>
           </li>
         </ul>
         <div className="sidebar-footer">
@@ -44,7 +52,12 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
       </nav>
 
-      <main className="main-content">{children}</main>
+      <main className="main-content">
+        <div className="page-container">
+          {children}
+        </div>
+      </main>
     </div>
   );
 };
+

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <!-- Transparent Background -->
+  <rect width="120" height="120" fill="transparent" />
+
+  <defs>
+    <!-- Deep Slate for Panels -->
+    <linearGradient id="panelLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#21242c" />
+      <stop offset="100%" stop-color="#15171c" />
+    </linearGradient>
+    <linearGradient id="panelRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a1c22" />
+      <stop offset="100%" stop-color="#0e0f12" />
+    </linearGradient>
+    <linearGradient id="panelTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a2e39" />
+      <stop offset="100%" stop-color="#1d2028" />
+    </linearGradient>
+    
+    <!-- Rich Gold for Frame and Bands -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdf0a6" />
+      <stop offset="100%" stop-color="#d4af37" />
+    </linearGradient>
+    <linearGradient id="goldMid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1cf5b" />
+      <stop offset="100%" stop-color="#c19921" />
+    </linearGradient>
+    <linearGradient id="goldDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c19921" />
+      <stop offset="100%" stop-color="#8a6c11" />
+    </linearGradient>
+
+    <!-- Magical Glow -->
+    <radialGradient id="glow" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="rgba(241, 207, 91, 0.4)" />
+      <stop offset="100%" stop-color="rgba(241, 207, 91, 0)" />
+    </radialGradient>
+    
+    <!-- Ruby Glow -->
+    <radialGradient id="rubyGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff4d4d" />
+      <stop offset="100%" stop-color="#990000" />
+    </radialGradient>
+  </defs>
+
+  <!-- Glowing Background Halo -->
+  <ellipse cx="60" cy="70" rx="50" ry="30" fill="url(#glow)" />
+
+  <g stroke-linejoin="round">
+    
+    <!-- Face Backgrounds -->
+    <path d="M 60 16 L 102 40 L 60 64 L 18 40 Z" fill="url(#panelTop)" />
+    <path d="M 18 40 L 60 64 L 60 110 L 18 86 Z" fill="url(#panelLeft)" />
+    <path d="M 60 64 L 102 40 L 102 86 L 60 110 Z" fill="url(#panelRight)" />
+
+    <!-- Frames (Thick borders) -->
+    <path d="M 60 16 L 102 40 L 60 64 L 18 40 Z" fill="none" stroke="url(#goldLight)" stroke-width="3" />
+    <path d="M 18 40 L 60 64 L 60 110 L 18 86 Z" fill="none" stroke="url(#goldMid)" stroke-width="3" />
+    <path d="M 60 64 L 102 40 L 102 86 L 60 110 Z" fill="none" stroke="url(#goldDark)" stroke-width="3" />
+    
+    <!-- Edge Highlights for 3D Bevel -->
+    <path d="M 60 64 L 60 110" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.8" />
+    <path d="M 18 40 L 60 64" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.8" />
+    <path d="M 60 64 L 102 40" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.3" />
+
+    <!-- Cross Bands on Top Face -->
+    <path d="M 39 52 L 81 28" fill="none" stroke="url(#goldLight)" stroke-width="4.5" />
+    <path d="M 81 52 L 39 28" fill="none" stroke="url(#goldLight)" stroke-width="4.5" />
+    <path d="M 39 52 L 81 28" fill="none" stroke="#fff" stroke-width="1" opacity="0.4" />
+    <path d="M 81 52 L 39 28" fill="none" stroke="#fff" stroke-width="1" opacity="0.4" />
+
+    <!-- Vertical Bands -->
+    <path d="M 39 52 L 39 98" fill="none" stroke="url(#goldMid)" stroke-width="4.5" />
+    <path d="M 81 52 L 81 98" fill="none" stroke="url(#goldDark)" stroke-width="4.5" />
+    
+    <!-- Vertical Band Highlights -->
+    <path d="M 38 52 L 38 98" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.6" />
+    <path d="M 80 52 L 80 98" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.2" />
+
+    <!-- Lid Opening Split (Cuts through the bands) -->
+    <!-- Slightly extended out of bounds to look like a full cut -->
+    <path d="M 16 52 L 60 76 L 104 52" fill="none" stroke="#0e0f12" stroke-width="4" stroke-linecap="round" />
+    <!-- Glowing split highlight -->
+    <path d="M 18 53 L 60 77 L 102 53" fill="none" stroke="url(#goldLight)" stroke-width="1" opacity="0.8" />
+
+    <!-- The Latch Mechanism -->
+    <path d="M 49.5 62 L 60 68 L 60 84 L 49.5 78 Z" fill="url(#goldMid)" stroke="#8a6c11" stroke-width="1.5" />
+    <path d="M 60 68 L 70.5 62 L 70.5 78 L 60 84 Z" fill="url(#goldDark)" stroke="#8a6c11" stroke-width="1.5" />
+    <path d="M 49.5 62 L 60 68 L 70.5 62" fill="none" stroke="#fdf0a6" stroke-width="1" />
+    <path d="M 60 68 L 60 84" fill="none" stroke="#fdf0a6" stroke-width="1" opacity="0.7" />
+
+    <!-- Latch Ruby -->
+    <path d="M 60 69 L 63 73 L 60 77 L 57 73 Z" fill="url(#rubyGlow)" stroke="#4a0000" stroke-width="0.5" />
+    <path d="M 60 69 L 63 73 L 57 73 Z" fill="#ff9999" opacity="0.4" />
+    
+    <!-- Rivets on Corners and Bands -->
+    <g fill="#fdf0a6">
+      <circle cx="18" cy="40" r="1.2" />
+      <circle cx="102" cy="40" r="1.2" />
+      <circle cx="60" cy="16" r="1.2" />
+      <circle cx="18" cy="86" r="1.2" />
+      <circle cx="102" cy="86" r="1.2" />
+      <circle cx="60" cy="110" r="1.2" />
+      <!-- Rivets on Left Band -->
+      <circle cx="39" cy="58" r="1" />
+      <circle cx="39" cy="75" r="1" />
+      <circle cx="39" cy="92" r="1" />
+      <!-- Rivets on Right Band -->
+      <circle cx="81" cy="58" r="1" />
+      <circle cx="81" cy="75" r="1" />
+      <circle cx="81" cy="92" r="1" />
+    </g>
+
+  </g>
+</svg>

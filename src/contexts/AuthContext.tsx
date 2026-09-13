@@ -2,11 +2,13 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
-import type { LoginRequest, RegisterRequest } from '../types';
+import { usersApi } from '../api/users';
+import type { LoginRequest, RegisterRequest, User } from '../types';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   userId: string | null;
+  user: User | null;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
@@ -18,21 +20,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const token = localStorage.getItem('accessToken');
-    const storedUserId = localStorage.getItem('userId');
-    
-    if (token && storedUserId) {
-      setIsAuthenticated(true);
-      setUserId(storedUserId);
-    }
-    
-    setIsLoading(false);
+    const initAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      const storedUserId = localStorage.getItem('userId');
+      
+      if (token && storedUserId) {
+        setIsAuthenticated(true);
+        setUserId(storedUserId);
+        try {
+          const fetchedUser = await usersApi.getById(storedUserId);
+          setUser(fetchedUser);
+        } catch (error) {
+          console.error('Failed to fetch user:', error);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
+
+  const fetchUser = async (id: string) => {
+    try {
+      const fetchedUser = await usersApi.getById(id);
+      setUser(fetchedUser);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+    }
+  };
 
   const login = async (credentials: LoginRequest) => {
     try {
@@ -43,12 +63,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Extract userId from the JWT token payload
       const tokenPayload = JSON.parse(atob(response.accessToken.split('.')[1]));
-      const userId = tokenPayload.sub || tokenPayload.userId;
+      const newUserId = tokenPayload.sub || tokenPayload.userId;
       
-      localStorage.setItem('userId', userId);
+      localStorage.setItem('userId', newUserId);
       
       setIsAuthenticated(true);
-      setUserId(userId);
+      setUserId(newUserId);
+      await fetchUser(newUserId);
       
       navigate('/');
     } catch (error) {
@@ -73,6 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       setIsAuthenticated(true);
       setUserId(registerResponse.userId);
+      await fetchUser(registerResponse.userId);
       
       navigate('/');
     } catch (error) {
@@ -85,11 +107,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     authApi.logout();
     setIsAuthenticated(false);
     setUserId(null);
+    setUser(null);
     navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userId, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, userId, user, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -102,3 +125,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

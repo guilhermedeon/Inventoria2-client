@@ -40,7 +40,10 @@ export const RegisterPage = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Inventoria2</h1>
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img src="/logo.svg" alt="Inventoria Logo" style={{ width: '80px', height: '80px' }} />
+        </div>
+        <h1>Inventoria</h1>
         <h2>Create Account</h2>
         
         {error && <div className="error-message">{error}</div>}

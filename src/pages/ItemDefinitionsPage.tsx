@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useItemDefinitionsQuery, useCreateItemDefinitionMutation, useDeleteItemDefinitionMutation } from '../hooks/use-item-definitions';
 import { useCategoriesQuery } from '../hooks/use-categories';
 import type { CreateItemDefinitionDto } from '../types';
 
 export function ItemDefinitionsPage() {
+  const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -172,45 +174,71 @@ export function ItemDefinitionsPage() {
         </div>
       )}
 
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Brand</th>
-              <th>Model</th>
-              <th>SKU</th>
-              <th>Category</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {itemDefinitions?.map((item) => (
-              <tr key={item.id}>
-                <td>{item.name}</td>
-                <td>{item.brand || '-'}</td>
-                <td>{item.model || '-'}</td>
-                <td>{item.sku || '-'}</td>
-                <td>
-                  {item.categoryId
-                    ? categories?.find((c) => c.id === item.categoryId)?.name
-                    : '-'}
-                </td>
-                <td>{new Date(item.createdAt).toLocaleDateString()}</td>
-                <td>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="btn-danger"
-                    disabled={deleteMutation.isPending}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+        {itemDefinitions?.map((item) => (
+          <div 
+            key={item.id} 
+            className="box-card"
+            style={{ 
+              background: 'var(--bg-tertiary)', 
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '1.5rem',
+              cursor: 'pointer',
+              transition: 'all var(--transition-normal)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: '200px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            onClick={() => navigate(`/item-definitions/${item.id}`)}
+          >
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--accent-primary)', fontSize: '1.25rem' }}>{item.name}</h3>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}>
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  <path d="M2 17l10 5 10-5"></path>
+                  <path d="M2 12l10 5 10-5"></path>
+                </svg>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {item.categoryId && (
+                  <span><strong>Category:</strong> {categories?.find((c) => c.id === item.categoryId)?.name || 'Unknown'}</span>
+                )}
+                {item.brand && <span><strong>Brand:</strong> {item.brand}</span>}
+                {item.model && <span><strong>Model:</strong> {item.model}</span>}
+                {item.sku && <span><strong>SKU:</strong> {item.sku}</span>}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{new Date(item.createdAt).toLocaleDateString()}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(item.id);
+                }}
+                className="btn-danger"
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                disabled={deleteMutation.isPending}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

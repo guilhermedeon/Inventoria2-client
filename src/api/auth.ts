@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenRequest } from '../types';
+import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, RefreshTokenRequest } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 

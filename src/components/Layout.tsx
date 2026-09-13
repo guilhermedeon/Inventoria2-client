@@ -19,7 +19,16 @@ export const Layout = ({ children }: LayoutProps) => {
             <Link to="/categories">Categories</Link>
           </li>
           <li>
+            <Link to="/tags">Tags</Link>
+          </li>
+          <li>
             <Link to="/item-definitions">Item Definitions</Link>
+          </li>
+          <li>
+            <Link to="/item-variants">Item Variants</Link>
+          </li>
+          <li>
+            <Link to="/pack-definitions">Pack Definitions</Link>
           </li>
           <li>
             <Link to="/inventories">Inventories</Link>

@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
-import { LoginRequest, RegisterRequest } from '../types';
+import type { LoginRequest, RegisterRequest } from '../types';
 
 interface AuthContextType {
   isAuthenticated: boolean;

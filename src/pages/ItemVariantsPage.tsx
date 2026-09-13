@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useItemVariants, useCreateItemVariant, useUpdateItemVariant, useDeleteItemVariant } from '../hooks/use-item-variants';
-import { useItemDefinitions } from '../hooks/use-item-definitions';
-import type { ItemVariant } from '../types';
+import { useItemDefinitionsQuery } from '../hooks/use-item-definitions';
+import type { ItemVariant, ItemDefinition } from '../types';
 
 export const ItemVariantsPage = () => {
   const { data: variants, isLoading, error } = useItemVariants();
-  const { data: itemDefinitions } = useItemDefinitions();
+  const { data: itemDefinitions } = useItemDefinitionsQuery();
   const createVariant = useCreateItemVariant();
   const updateVariant = useUpdateItemVariant();
   const deleteVariant = useDeleteItemVariant();
@@ -92,7 +92,7 @@ export const ItemVariantsPage = () => {
                 required
               >
                 <option value="">Select an item definition</option>
-                {itemDefinitions?.map((def) => (
+                {itemDefinitions?.map((def: ItemDefinition) => (
                   <option key={def.id} value={def.id}>
                     {def.name}
                   </option>
@@ -169,7 +169,7 @@ export const ItemVariantsPage = () => {
           </thead>
           <tbody>
             {variants?.map((variant) => {
-              const itemDef = itemDefinitions?.find((d) => d.id === variant.itemDefinitionId);
+              const itemDef = itemDefinitions?.find((d: ItemDefinition) => d.id === variant.itemDefinitionId);
               return (
                 <tr key={variant.id}>
                   <td>{variant.name}</td>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useInventoryItems, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/use-inventory-items';
-import { useInventories } from '../hooks/use-inventories';
+import { useInventoriesQuery } from '../hooks/use-inventories';
 import { useItemVariants } from '../hooks/use-item-variants';
 import { usePackDefinitions } from '../hooks/use-pack-definitions';
-import type { InventoryItem } from '../types';
+import type { InventoryItem, Inventory } from '../types';
 
 export const InventoryItemsPage = () => {
   const { data: items, isLoading, error } = useInventoryItems();
-  const { data: inventories } = useInventories();
+  const { data: inventories } = useInventoriesQuery();
   const { data: variants } = useItemVariants();
   const { data: packs } = usePackDefinitions();
   const createItem = useCreateInventoryItem();
@@ -113,7 +113,7 @@ export const InventoryItemsPage = () => {
                 required
               >
                 <option value="">Select inventory</option>
-                {inventories?.map((inv) => (
+                {inventories?.map((inv: Inventory) => (
                   <option key={inv.id} value={inv.id}>
                     {inv.name}
                   </option>
@@ -252,7 +252,7 @@ export const InventoryItemsPage = () => {
           </thead>
           <tbody>
             {items?.map((item) => {
-              const inventory = inventories?.find((i) => i.id === item.inventoryId);
+              const inventory = inventories?.find((i: Inventory) => i.id === item.inventoryId);
               const variant = variants?.find((v) => v.id === item.itemVariantId);
               const pack = packs?.find((p) => p.id === item.packDefinitionId);
               const itemName = variant?.name || pack?.name || 'Unknown';

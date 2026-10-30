@@ -19,6 +19,7 @@ export const ItemDefinitionDetailsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingVariant, setEditingVariant] = useState<ItemVariant | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,6 +29,7 @@ export const ItemDefinitionDetailsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     const userId = localStorage.getItem('userId') || '';
 
     try {
@@ -42,6 +44,7 @@ export const ItemDefinitionDetailsPage = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to save variant:', error);
+      setActionError('Failed to save variant. Please check your input.');
     }
   };
 
@@ -64,7 +67,13 @@ export const ItemDefinitionDetailsPage = () => {
 
   const handleDelete = async (variantId: string) => {
     if (window.confirm('Are you sure you want to delete this variant?')) {
-      await deleteVariant.mutateAsync(variantId);
+      setActionError(null);
+      try {
+        await deleteVariant.mutateAsync(variantId);
+      } catch (error) {
+        console.error('Failed to delete variant:', error);
+        setActionError('Failed to delete variant.');
+      }
     }
   };
 
@@ -90,6 +99,8 @@ export const ItemDefinitionDetailsPage = () => {
           )}
         </div>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

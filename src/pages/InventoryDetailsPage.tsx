@@ -24,6 +24,7 @@ export const InventoryDetailsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemType, setItemType] = useState<'variant' | 'pack'>('variant');
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     itemVariantId: '',
     packDefinitionId: '',
@@ -35,6 +36,7 @@ export const InventoryDetailsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     const userId = localStorage.getItem('userId') || '';
 
     const data = {
@@ -54,6 +56,7 @@ export const InventoryDetailsPage = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to save inventory item:', error);
+      setActionError('Failed to save inventory item. Please check your input.');
     }
   };
 
@@ -87,7 +90,13 @@ export const InventoryDetailsPage = () => {
 
   const handleDelete = async (itemId: string) => {
     if (window.confirm('Are you sure you want to remove this item from the inventory?')) {
-      await deleteItem.mutateAsync(itemId);
+      setActionError(null);
+      try {
+        await deleteItem.mutateAsync(itemId);
+      } catch (error) {
+        console.error('Failed to delete inventory item:', error);
+        setActionError('Failed to delete inventory item.');
+      }
     }
   };
 
@@ -113,6 +122,8 @@ export const InventoryDetailsPage = () => {
           )}
         </div>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

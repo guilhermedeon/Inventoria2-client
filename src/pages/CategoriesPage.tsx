@@ -4,6 +4,7 @@ import type { CreateCategoryDto } from '../types';
 
 export function CategoriesPage() {
   const [isCreating, setIsCreating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -16,6 +17,7 @@ export function CategoriesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     
     const userId = localStorage.getItem('userId') || '';
     
@@ -32,17 +34,20 @@ export function CategoriesPage() {
       setIsCreating(false);
     } catch (err) {
       console.error('Failed to create category:', err);
+      setActionError('Failed to create category. Please check your input.');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
+    setActionError(null);
     
     const userId = localStorage.getItem('userId') || '';
     try {
       await deleteMutation.mutateAsync({ id, userId });
     } catch (err) {
       console.error('Failed to delete category:', err);
+      setActionError('Failed to delete category.');
     }
   };
 
@@ -57,6 +62,8 @@ export function CategoriesPage() {
           Add Category
         </button>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

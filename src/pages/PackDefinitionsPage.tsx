@@ -12,6 +12,7 @@ export const PackDefinitionsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingPack, setEditingPack] = useState<PackDefinition | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -42,6 +43,7 @@ export const PackDefinitionsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     const userId = localStorage.getItem('userId') || '';
 
     try {
@@ -58,6 +60,7 @@ export const PackDefinitionsPage = () => {
       setEditingPack(null);
     } catch (error) {
       console.error('Failed to save pack:', error);
+      setActionError('Failed to save pack definition. Please check your input.');
     }
   };
 
@@ -75,7 +78,13 @@ export const PackDefinitionsPage = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this pack?')) {
-      await deletePack.mutateAsync(id);
+      setActionError(null);
+      try {
+        await deletePack.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete pack:', error);
+        setActionError('Failed to delete pack.');
+      }
     }
   };
 
@@ -98,6 +107,8 @@ export const PackDefinitionsPage = () => {
           </button>
         )}
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

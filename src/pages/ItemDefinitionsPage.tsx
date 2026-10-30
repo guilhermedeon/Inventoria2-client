@@ -7,6 +7,7 @@ import type { CreateItemDefinitionDto } from '../types';
 export function ItemDefinitionsPage() {
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -24,6 +25,7 @@ export function ItemDefinitionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     
     const userId = localStorage.getItem('userId') || '';
     
@@ -52,17 +54,20 @@ export function ItemDefinitionsPage() {
       setIsCreating(false);
     } catch (err) {
       console.error('Failed to create item definition:', err);
+      setActionError('Failed to create item definition. Please check your input.');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this item definition?')) return;
+    setActionError(null);
     
     const userId = localStorage.getItem('userId') || '';
     try {
       await deleteMutation.mutateAsync({ id, userId });
     } catch (err) {
       console.error('Failed to delete item definition:', err);
+      setActionError('Failed to delete item definition.');
     }
   };
 
@@ -77,6 +82,8 @@ export function ItemDefinitionsPage() {
           Add Item Definition
         </button>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

@@ -10,10 +10,12 @@ export const TagsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     const userId = localStorage.getItem('userId') || '';
 
     try {
@@ -30,6 +32,7 @@ export const TagsPage = () => {
       setEditingTag(null);
     } catch (error) {
       console.error('Failed to save tag:', error);
+      setActionError('Failed to save tag. Please check your input.');
     }
   };
 
@@ -41,7 +44,13 @@ export const TagsPage = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this tag?')) {
-      await deleteTag.mutateAsync(id);
+      setActionError(null);
+      try {
+        await deleteTag.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete tag:', error);
+        setActionError('Failed to delete tag.');
+      }
     }
   };
 
@@ -64,6 +73,8 @@ export const TagsPage = () => {
           </button>
         )}
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

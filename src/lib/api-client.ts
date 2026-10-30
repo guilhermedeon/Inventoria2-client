@@ -20,6 +20,8 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Handle token refresh on 401
+let refreshPromise: Promise<string> | null = null;
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -31,28 +33,44 @@ apiClient.interceptors.response.use(
             const refreshToken = localStorage.getItem("refreshToken");
             if (refreshToken) {
                 try {
-                    const response = await axios.post(
-                        `${API_BASE_URL}/users/refresh-token`,
-                        {
-                            refreshToken,
-                        },
-                    );
+                    if (!refreshPromise) {
+                        refreshPromise = (async () => {
+                            const response = await axios.post(
+                                `${API_BASE_URL}/users/refresh-token`,
+                                {
+                                    refreshToken,
+                                },
+                            );
 
-                    const { accessToken, refreshToken: newRefreshToken } =
-                        response.data;
-                    localStorage.setItem("accessToken", accessToken);
-                    localStorage.setItem("refreshToken", newRefreshToken);
+                            const { accessToken, refreshToken: newRefreshToken } =
+                                response.data;
+                            localStorage.setItem("accessToken", accessToken);
+                            localStorage.setItem("refreshToken", newRefreshToken);
+                            return accessToken;
+                        })().finally(() => {
+                            refreshPromise = null;
+                        });
+                    }
+
+                    const accessToken = await refreshPromise;
 
                     originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                     return apiClient(originalRequest);
                 } catch (refreshError) {
                     localStorage.removeItem("accessToken");
                     localStorage.removeItem("refreshToken");
+                    localStorage.removeItem("userId");
                     window.location.href = "/login";
                 }
+            } else {
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                localStorage.removeItem("userId");
+                window.location.href = "/login";
             }
         }
 
         return Promise.reject(error);
     },
 );
+

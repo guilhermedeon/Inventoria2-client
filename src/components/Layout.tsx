@@ -53,9 +53,7 @@ export const Layout = ({ children }: LayoutProps) => {
       </nav>
 
       <main className="main-content">
-        <div className="page-container">
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   );

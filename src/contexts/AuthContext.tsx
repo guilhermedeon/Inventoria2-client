@@ -17,6 +17,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function parseJwtPayload(token: string): Record<string, any> {
+  const payloadPart = token.split('.')[1];
+  if (!payloadPart) {
+    throw new Error('Invalid token structure received from server');
+  }
+  const base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+  const jsonPayload = decodeURIComponent(
+    atob(padded)
+      .split('')
+      .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+      .join('')
+  );
+  return JSON.parse(jsonPayload);
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -61,11 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('accessToken', response.accessToken);
       localStorage.setItem('refreshToken', response.refreshToken);
       
-      // Extract userId from the JWT token payload
-      const tokenPayload = JSON.parse(atob(response.accessToken.split('.')[1]));
+      // Extract userId from the JWT token payload safely (RFC 7519 Base64URL + UTF-8)
+      const tokenPayload = parseJwtPayload(response.accessToken);
       const newUserId = tokenPayload.sub || tokenPayload.userId;
       
       localStorage.setItem('userId', newUserId);
+
       
       setIsAuthenticated(true);
       setUserId(newUserId);

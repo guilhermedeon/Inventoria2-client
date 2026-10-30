@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 import { useInventoryQuery } from '../hooks/use-inventories';
 import { useInventoryItems, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/use-inventory-items';
 import { useItemVariants } from '../hooks/use-item-variants';
@@ -9,6 +10,7 @@ import type { InventoryItem } from '../types';
 export const InventoryDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const { data: inventory, isLoading: isLoadingInventory, error: errorInventory } = useInventoryQuery(id!);
   const { data: allItems, isLoading: isLoadingItems, error: errorItems } = useInventoryItems();
@@ -24,6 +26,7 @@ export const InventoryDetailsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemType, setItemType] = useState<'variant' | 'pack'>('variant');
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     itemVariantId: '',
     packDefinitionId: '',
@@ -35,11 +38,12 @@ export const InventoryDetailsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userId = localStorage.getItem('userId') || '';
+    setActionError(null);
+    const effectiveUserId = userId || '';
 
     const data = {
       ...formData,
-      userId,
+      userId: effectiveUserId,
       inventoryId: id!,
       itemVariantId: itemType === 'variant' ? formData.itemVariantId : undefined,
       packDefinitionId: itemType === 'pack' ? formData.packDefinitionId : undefined,
@@ -54,6 +58,7 @@ export const InventoryDetailsPage = () => {
       resetForm();
     } catch (error) {
       console.error('Failed to save inventory item:', error);
+      setActionError('Failed to save inventory item. Please check your input.');
     }
   };
 
@@ -87,7 +92,13 @@ export const InventoryDetailsPage = () => {
 
   const handleDelete = async (itemId: string) => {
     if (window.confirm('Are you sure you want to remove this item from the inventory?')) {
-      await deleteItem.mutateAsync(itemId);
+      setActionError(null);
+      try {
+        await deleteItem.mutateAsync(itemId);
+      } catch (error) {
+        console.error('Failed to delete inventory item:', error);
+        setActionError('Failed to delete inventory item.');
+      }
     }
   };
 
@@ -113,6 +124,8 @@ export const InventoryDetailsPage = () => {
           )}
         </div>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">
@@ -185,7 +198,10 @@ export const InventoryDetailsPage = () => {
                 type="number"
                 min="1"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setFormData({ ...formData, quantity: Number.isNaN(val) ? 1 : val });
+                }}
                 required
               />
             </div>

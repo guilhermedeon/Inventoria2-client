@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useAuth } from '../hooks/use-auth';
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '../hooks/use-tags';
 import type { Tag } from '../types';
 
 export const TagsPage = () => {
+  const { userId } = useAuth();
   const { data: tags, isLoading, error } = useTags();
   const createTag = useCreateTag();
   const updateTag = useUpdateTag();
@@ -10,26 +12,29 @@ export const TagsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', slug: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userId = localStorage.getItem('userId') || '';
+    setActionError(null);
+    const effectiveUserId = userId || '';
 
     try {
       if (editingTag) {
         await updateTag.mutateAsync({
           id: editingTag.id,
-          data: { ...formData, userId },
+          data: { ...formData, userId: effectiveUserId },
         });
       } else {
-        await createTag.mutateAsync({ ...formData, userId });
+        await createTag.mutateAsync({ ...formData, userId: effectiveUserId });
       }
       setFormData({ name: '', slug: '' });
       setIsCreating(false);
       setEditingTag(null);
     } catch (error) {
       console.error('Failed to save tag:', error);
+      setActionError('Failed to save tag. Please check your input.');
     }
   };
 
@@ -41,7 +46,13 @@ export const TagsPage = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this tag?')) {
-      await deleteTag.mutateAsync(id);
+      setActionError(null);
+      try {
+        await deleteTag.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete tag:', error);
+        setActionError('Failed to delete tag.');
+      }
     }
   };
 
@@ -64,6 +75,8 @@ export const TagsPage = () => {
           </button>
         )}
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

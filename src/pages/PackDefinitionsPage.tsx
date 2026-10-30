@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useAuth } from '../hooks/use-auth';
 import { usePackDefinitions, useCreatePackDefinition, useUpdatePackDefinition, useDeletePackDefinition } from '../hooks/use-pack-definitions';
 import { useItemVariants } from '../hooks/use-item-variants';
 import type { PackDefinition, PackItem } from '../types';
 
 export const PackDefinitionsPage = () => {
+  const { userId } = useAuth();
   const { data: packs, isLoading, error } = usePackDefinitions();
   const { data: variants } = useItemVariants();
   const createPack = useCreatePackDefinition();
@@ -12,6 +14,7 @@ export const PackDefinitionsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingPack, setEditingPack] = useState<PackDefinition | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -42,22 +45,24 @@ export const PackDefinitionsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userId = localStorage.getItem('userId') || '';
+    setActionError(null);
+    const effectiveUserId = userId || '';
 
     try {
       if (editingPack) {
         await updatePack.mutateAsync({
           id: editingPack.id,
-          data: { ...formData, userId },
+          data: { ...formData, userId: effectiveUserId },
         });
       } else {
-        await createPack.mutateAsync({ ...formData, userId });
+        await createPack.mutateAsync({ ...formData, userId: effectiveUserId });
       }
       setFormData({ name: '', description: '', sku: '', barcode: '', items: [] });
       setIsCreating(false);
       setEditingPack(null);
     } catch (error) {
       console.error('Failed to save pack:', error);
+      setActionError('Failed to save pack definition. Please check your input.');
     }
   };
 
@@ -75,7 +80,13 @@ export const PackDefinitionsPage = () => {
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this pack?')) {
-      await deletePack.mutateAsync(id);
+      setActionError(null);
+      try {
+        await deletePack.mutateAsync(id);
+      } catch (error) {
+        console.error('Failed to delete pack:', error);
+        setActionError('Failed to delete pack.');
+      }
     }
   };
 
@@ -98,6 +109,8 @@ export const PackDefinitionsPage = () => {
           </button>
         )}
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">
@@ -167,7 +180,10 @@ export const PackDefinitionsPage = () => {
                     type="number"
                     min="1"
                     value={item.quantity}
-                    onChange={(e) => updatePackItem(index, 'quantity', parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      updatePackItem(index, 'quantity', Number.isNaN(val) ? 1 : val);
+                    }}
                     placeholder="Qty"
                     style={{ flex: 1 }}
                     required

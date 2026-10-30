@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 import { useItemDefinitionQuery } from '../hooks/use-item-definitions';
 import { useItemVariants, useCreateItemVariant, useUpdateItemVariant, useDeleteItemVariant } from '../hooks/use-item-variants';
 import type { ItemVariant } from '../types';
@@ -7,6 +8,7 @@ import type { ItemVariant } from '../types';
 export const ItemDefinitionDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const { data: itemDefinition, isLoading: isLoadingDef, error: errorDef } = useItemDefinitionQuery(id!);
   const { data: allVariants, isLoading: isLoadingVariants, error: errorVariants } = useItemVariants();
@@ -19,6 +21,7 @@ export const ItemDefinitionDetailsPage = () => {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingVariant, setEditingVariant] = useState<ItemVariant | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,20 +31,22 @@ export const ItemDefinitionDetailsPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const userId = localStorage.getItem('userId') || '';
+    setActionError(null);
+    const effectiveUserId = userId || '';
 
     try {
       if (editingVariant) {
         await updateVariant.mutateAsync({
           id: editingVariant.id,
-          data: { ...formData, itemDefinitionId: id!, userId },
+          data: { ...formData, itemDefinitionId: id!, userId: effectiveUserId },
         });
       } else {
-        await createVariant.mutateAsync({ ...formData, itemDefinitionId: id!, userId });
+        await createVariant.mutateAsync({ ...formData, itemDefinitionId: id!, userId: effectiveUserId });
       }
       resetForm();
     } catch (error) {
       console.error('Failed to save variant:', error);
+      setActionError('Failed to save variant. Please check your input.');
     }
   };
 
@@ -64,7 +69,13 @@ export const ItemDefinitionDetailsPage = () => {
 
   const handleDelete = async (variantId: string) => {
     if (window.confirm('Are you sure you want to delete this variant?')) {
-      await deleteVariant.mutateAsync(variantId);
+      setActionError(null);
+      try {
+        await deleteVariant.mutateAsync(variantId);
+      } catch (error) {
+        console.error('Failed to delete variant:', error);
+        setActionError('Failed to delete variant.');
+      }
     }
   };
 
@@ -90,6 +101,8 @@ export const ItemDefinitionDetailsPage = () => {
           )}
         </div>
       </div>
+
+      {actionError && <div className="error">{actionError}</div>}
 
       {isCreating && (
         <div className="form-container">

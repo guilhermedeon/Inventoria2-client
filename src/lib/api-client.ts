@@ -56,7 +56,7 @@ apiClient.interceptors.response.use(
 
                     originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                     return apiClient(originalRequest);
-                } catch (refreshError) {
+                } catch {
                     localStorage.removeItem("accessToken");
                     localStorage.removeItem("refreshToken");
                     localStorage.removeItem("userId");

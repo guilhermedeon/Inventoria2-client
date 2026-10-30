@@ -1,21 +1,11 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
 import { usersApi } from '../api/users';
 import type { LoginRequest, RegisterRequest, User } from '../types';
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  userId: string | null;
-  user: User | null;
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './auth-context';
+export type { AuthContextType } from './auth-context';
 
 function parseJwtPayload(token: string): Record<string, any> {
   const payloadPart = token.split('.')[1];
@@ -135,11 +125,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
 

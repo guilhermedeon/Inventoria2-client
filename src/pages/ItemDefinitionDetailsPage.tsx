@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 import { useItemDefinitionQuery } from '../hooks/use-item-definitions';
 import { useItemVariants, useCreateItemVariant, useUpdateItemVariant, useDeleteItemVariant } from '../hooks/use-item-variants';
 import type { ItemVariant } from '../types';
@@ -7,6 +8,7 @@ import type { ItemVariant } from '../types';
 export const ItemDefinitionDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const { data: itemDefinition, isLoading: isLoadingDef, error: errorDef } = useItemDefinitionQuery(id!);
   const { data: allVariants, isLoading: isLoadingVariants, error: errorVariants } = useItemVariants();
@@ -30,16 +32,16 @@ export const ItemDefinitionDetailsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionError(null);
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
 
     try {
       if (editingVariant) {
         await updateVariant.mutateAsync({
           id: editingVariant.id,
-          data: { ...formData, itemDefinitionId: id!, userId },
+          data: { ...formData, itemDefinitionId: id!, userId: effectiveUserId },
         });
       } else {
-        await createVariant.mutateAsync({ ...formData, itemDefinitionId: id!, userId });
+        await createVariant.mutateAsync({ ...formData, itemDefinitionId: id!, userId: effectiveUserId });
       }
       resetForm();
     } catch (error) {

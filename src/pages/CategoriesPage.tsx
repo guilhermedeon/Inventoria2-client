@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useAuth } from '../hooks/use-auth';
 import { useCategoriesQuery, useCreateCategoryMutation, useDeleteCategoryMutation } from '../hooks/use-categories';
 import type { CreateCategoryDto } from '../types';
 
 export function CategoriesPage() {
+  const { userId } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -19,10 +21,10 @@ export function CategoriesPage() {
     e.preventDefault();
     setActionError(null);
     
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
     
     const dto: CreateCategoryDto = {
-      userId,
+      userId: effectiveUserId,
       name: formData.name,
       slug: formData.slug,
       parentId: formData.parentId || undefined,
@@ -42,9 +44,9 @@ export function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return;
     setActionError(null);
     
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
     try {
-      await deleteMutation.mutateAsync({ id, userId });
+      await deleteMutation.mutateAsync({ id, userId: effectiveUserId });
     } catch (err) {
       console.error('Failed to delete category:', err);
       setActionError('Failed to delete category.');

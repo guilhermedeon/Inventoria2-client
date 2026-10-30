@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 import { useInventoryQuery } from '../hooks/use-inventories';
 import { useInventoryItems, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/use-inventory-items';
 import { useItemVariants } from '../hooks/use-item-variants';
@@ -9,6 +10,7 @@ import type { InventoryItem } from '../types';
 export const InventoryDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
 
   const { data: inventory, isLoading: isLoadingInventory, error: errorInventory } = useInventoryQuery(id!);
   const { data: allItems, isLoading: isLoadingItems, error: errorItems } = useInventoryItems();
@@ -37,11 +39,11 @@ export const InventoryDetailsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionError(null);
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
 
     const data = {
       ...formData,
-      userId,
+      userId: effectiveUserId,
       inventoryId: id!,
       itemVariantId: itemType === 'variant' ? formData.itemVariantId : undefined,
       packDefinitionId: itemType === 'pack' ? formData.packDefinitionId : undefined,

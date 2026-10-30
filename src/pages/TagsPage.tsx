@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useAuth } from '../hooks/use-auth';
 import { useTags, useCreateTag, useUpdateTag, useDeleteTag } from '../hooks/use-tags';
 import type { Tag } from '../types';
 
 export const TagsPage = () => {
+  const { userId } = useAuth();
   const { data: tags, isLoading, error } = useTags();
   const createTag = useCreateTag();
   const updateTag = useUpdateTag();
@@ -16,16 +18,16 @@ export const TagsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionError(null);
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
 
     try {
       if (editingTag) {
         await updateTag.mutateAsync({
           id: editingTag.id,
-          data: { ...formData, userId },
+          data: { ...formData, userId: effectiveUserId },
         });
       } else {
-        await createTag.mutateAsync({ ...formData, userId });
+        await createTag.mutateAsync({ ...formData, userId: effectiveUserId });
       }
       setFormData({ name: '', slug: '' });
       setIsCreating(false);

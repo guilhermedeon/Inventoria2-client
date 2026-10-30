@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
 import { useItemDefinitionsQuery, useCreateItemDefinitionMutation, useDeleteItemDefinitionMutation } from '../hooks/use-item-definitions';
 import { useCategoriesQuery } from '../hooks/use-categories';
 import type { CreateItemDefinitionDto } from '../types';
 
 export function ItemDefinitionsPage() {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -27,10 +29,10 @@ export function ItemDefinitionsPage() {
     e.preventDefault();
     setActionError(null);
     
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
     
     const dto: CreateItemDefinitionDto = {
-      userId,
+      userId: effectiveUserId,
       name: formData.name,
       description: formData.description || undefined,
       brand: formData.brand || undefined,
@@ -62,9 +64,9 @@ export function ItemDefinitionsPage() {
     if (!confirm('Are you sure you want to delete this item definition?')) return;
     setActionError(null);
     
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
     try {
-      await deleteMutation.mutateAsync({ id, userId });
+      await deleteMutation.mutateAsync({ id, userId: effectiveUserId });
     } catch (err) {
       console.error('Failed to delete item definition:', err);
       setActionError('Failed to delete item definition.');

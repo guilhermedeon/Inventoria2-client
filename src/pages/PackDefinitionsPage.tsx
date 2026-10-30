@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useAuth } from '../hooks/use-auth';
 import { usePackDefinitions, useCreatePackDefinition, useUpdatePackDefinition, useDeletePackDefinition } from '../hooks/use-pack-definitions';
 import { useItemVariants } from '../hooks/use-item-variants';
 import type { PackDefinition, PackItem } from '../types';
 
 export const PackDefinitionsPage = () => {
+  const { userId } = useAuth();
   const { data: packs, isLoading, error } = usePackDefinitions();
   const { data: variants } = useItemVariants();
   const createPack = useCreatePackDefinition();
@@ -44,16 +46,16 @@ export const PackDefinitionsPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionError(null);
-    const userId = localStorage.getItem('userId') || '';
+    const effectiveUserId = userId || '';
 
     try {
       if (editingPack) {
         await updatePack.mutateAsync({
           id: editingPack.id,
-          data: { ...formData, userId },
+          data: { ...formData, userId: effectiveUserId },
         });
       } else {
-        await createPack.mutateAsync({ ...formData, userId });
+        await createPack.mutateAsync({ ...formData, userId: effectiveUserId });
       }
       setFormData({ name: '', description: '', sku: '', barcode: '', items: [] });
       setIsCreating(false);

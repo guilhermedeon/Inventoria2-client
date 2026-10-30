@@ -167,7 +167,10 @@ export const PackDefinitionsPage = () => {
                     type="number"
                     min="1"
                     value={item.quantity}
-                    onChange={(e) => updatePackItem(index, 'quantity', parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      updatePackItem(index, 'quantity', Number.isNaN(val) ? 1 : val);
+                    }}
                     placeholder="Qty"
                     style={{ flex: 1 }}
                     required

@@ -185,7 +185,10 @@ export const InventoryDetailsPage = () => {
                 type="number"
                 min="1"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setFormData({ ...formData, quantity: Number.isNaN(val) ? 1 : val });
+                }}
                 required
               />
             </div>
